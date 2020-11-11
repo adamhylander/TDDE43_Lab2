@@ -4,13 +4,10 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.graphics.Color;
 import android.os.Bundle;
-import android.os.health.SystemHealthManager;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
-import android.widget.AdapterView;
 import android.widget.EditText;
-import android.widget.ExpandableListAdapter;
 import android.widget.ExpandableListView;
 import android.widget.ExpandableListView.OnChildClickListener;
 import android.widget.ExpandableListView.OnGroupClickListener;
@@ -27,7 +24,6 @@ public class MainActivity extends AppCompatActivity {
     private Adapter listAdapter;
     int expandedParent = -1;
     int checkedItem = -1;
-    boolean pressed;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,14 +63,21 @@ public class MainActivity extends AppCompatActivity {
         expandableListView.setOnGroupClickListener(new OnGroupClickListener() {
             @Override
             public boolean onGroupClick(ExpandableListView parent, View v, int groupPosition, long id) {
-                if(expandedParent != -1) expandableListView.collapseGroup(expandedParent);
+                if(expandedParent != -1) {
+                    expandableListView.collapseGroup(expandedParent);
+                    expandedParent = -1;
+                    if(checkedItem != -1) {
+                        listAdapter.checkItem(expandedParent, checkedItem);
+                        checkedItem = -1;
+                    }
+                }
                 String[] arrOfStr = searchBar.getText().toString().split("/");
                 if(searchBar.getText().toString().equals("/") || !(((String) listAdapter.getGroup(groupPosition)).equals(arrOfStr[1])))
                     searchBar.setText("/" + (String) listAdapter.getGroup(groupPosition));
 
-                else
+                else {
                     searchBar.setText("/");
-
+                }
                 return true;
             }
         });
@@ -83,7 +86,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public boolean onChildClick(ExpandableListView parent, View v, int groupPosition, int childPosition, long id) {
                 if(checkedItem != childPosition) {
-                    System.out.println("FÖRST");
                     searchBar.setText("/" + (String) listAdapter.getGroup(groupPosition) +
                             "/" + (String) listAdapter.getChild(groupPosition, childPosition));
                 }
@@ -104,6 +106,8 @@ public class MainActivity extends AppCompatActivity {
             listAdapter.checkItem(expandedParent, checkedItem);
         }
 
+        boolean isPossibleInTree = false;
+
         if(arrOfStr.length > 1) {
             if (colors.keySet().contains(arrOfStr[1])) {
                 searchBar.setBackgroundColor(Color.TRANSPARENT);
@@ -115,17 +119,39 @@ public class MainActivity extends AppCompatActivity {
                         if(s.equals(arrOfStr[2])) {
                             checkedItem = a.indexOf(s);
                             listAdapter.checkItem(expandedParent, checkedItem);
-                            pressed = true;
                             searchBar.setBackgroundColor(Color.TRANSPARENT);
                             return;
                         }
+                        if(!isPossibleInTree) {
+                            for (int i = 0; i < arrOfStr[2].length(); i++) {
+                                if (arrOfStr[2].length() > s.length() || s.charAt(i) != arrOfStr[2].charAt(i)) {
+                                    isPossibleInTree = false;
+                                    break;
+                                }
+                                isPossibleInTree = true;
+                            }
+                        }
                     }
-                    searchBar.setBackgroundColor(Color.RED);
+                    if(isPossibleInTree) searchBar.setBackgroundColor(Color.TRANSPARENT);
+                    else searchBar.setBackgroundColor(Color.RED);
                     checkedItem = -1;
                 }
             } else {
                 if(expandedParent != -1) expandableListView.collapseGroup(expandedParent);
-                searchBar.setBackgroundColor(Color.RED);
+                for(String s : colors.keySet()) {
+                    if(!isPossibleInTree) {
+                        for (int i = 0; i < arrOfStr[1].length(); i++) {
+                            if (arrOfStr[1].length() > s.length() || s.charAt(i) != arrOfStr[1].charAt(i)) {
+                                isPossibleInTree = false;
+                                break;
+                            }
+                            isPossibleInTree = true;
+                        }
+                        if(isPossibleInTree) break;
+                    }
+                }
+                if(isPossibleInTree) searchBar.setBackgroundColor(Color.TRANSPARENT);
+                else searchBar.setBackgroundColor(Color.RED);
                 expandedParent = -1;
             }
         }
@@ -136,7 +162,7 @@ public class MainActivity extends AppCompatActivity {
         colors = new HashMap<>();
 
         gradients.add("light");
-        gradients.add("medium");
+        gradients.add("light");
         gradients.add("dark");
 
         List<String> light = new ArrayList<>();

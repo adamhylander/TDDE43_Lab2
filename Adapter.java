@@ -2,6 +2,7 @@ package com.example.lab2;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -95,6 +96,9 @@ public class Adapter extends BaseExpandableListAdapter {
                 childText.setBackgroundColor(Color.LTGRAY);
             else
                 childText.setBackgroundColor(Color.TRANSPARENT);
+        }
+        else {
+            childText.setBackgroundColor(Color.TRANSPARENT);
         }
 
         return convertView;
